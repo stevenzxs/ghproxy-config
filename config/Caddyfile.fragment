@@ -7,7 +7,7 @@ ghproxy.stevenzxs.cn {
     @download {
         remote_ip 115.190.243.21
         method GET HEAD
-        path_regexp download ^/https://(github\.com/[^/]+/[^/]+/(releases|archive|blob|raw)/.+|raw\.githubusercontent\.com/[^/]+/[^/]+/.+)$
+        path_regexp download ^/https:/+(github\.com/[^/]+/[^/]+/(releases|archive|blob|raw)/.+|raw\.githubusercontent\.com/[^/]+/[^/]+/.+)$
     }
     handle @download {
         reverse_proxy ghproxy-backend:5000 {
@@ -18,7 +18,7 @@ ghproxy.stevenzxs.cn {
     @discover {
         remote_ip 115.190.243.21
         method GET
-        path_regexp discover ^/https://github\.com/[^/]+/[^/]+/info/refs$
+        path_regexp discover ^/https:/+github\.com/[^/]+/[^/]+/info/refs$
         query service=git-upload-pack
     }
     handle @discover {
@@ -30,7 +30,7 @@ ghproxy.stevenzxs.cn {
     @fetch {
         remote_ip 115.190.243.21
         method POST
-        path_regexp fetch ^/https://github\.com/[^/]+/[^/]+/git-upload-pack$
+        path_regexp fetch ^/https:/+github\.com/[^/]+/[^/]+/git-upload-pack$
     }
     handle @fetch {
         request_body {
