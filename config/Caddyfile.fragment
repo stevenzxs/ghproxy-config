@@ -1,0 +1,48 @@
+# BEGIN managed ghproxy.stevenzxs.cn
+ghproxy.stevenzxs.cn {
+    @health path /ready
+    handle @health {
+        reverse_proxy ghproxy-backend:5000
+    }
+    @download {
+        remote_ip 115.190.243.21
+        method GET HEAD
+        path_regexp download ^/https://(github\.com/[^/]+/[^/]+/(releases|archive|blob|raw)/.+|raw\.githubusercontent\.com/[^/]+/[^/]+/.+)$
+    }
+    handle @download {
+        reverse_proxy ghproxy-backend:5000 {
+            header_up -Authorization
+            header_up -Cookie
+        }
+    }
+    @discover {
+        remote_ip 115.190.243.21
+        method GET
+        path_regexp discover ^/https://github\.com/[^/]+/[^/]+/info/refs$
+        query service=git-upload-pack
+    }
+    handle @discover {
+        reverse_proxy ghproxy-backend:5000 {
+            header_up -Authorization
+            header_up -Cookie
+        }
+    }
+    @fetch {
+        remote_ip 115.190.243.21
+        method POST
+        path_regexp fetch ^/https://github\.com/[^/]+/[^/]+/git-upload-pack$
+    }
+    handle @fetch {
+        request_body {
+            max_size 10MB
+        }
+        reverse_proxy ghproxy-backend:5000 {
+            header_up -Authorization
+            header_up -Cookie
+        }
+    }
+    handle {
+        respond 403
+    }
+}
+# END managed ghproxy.stevenzxs.cn

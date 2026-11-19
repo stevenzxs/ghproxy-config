@@ -1,0 +1,9 @@
+{
+  "repository": "sky22333/hubproxy",
+  "release": "v1.2.5",
+  "sha": "320df5def5c202409d2beec0dd5b4b2266bedc02",
+  "published_at": "2026-07-12T19:54:26Z",
+  "license": "MIT",
+  "platform": "linux/amd64",
+  "image": "ghcr.io/stevenzxs/ghproxy"
+}

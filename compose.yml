@@ -1,0 +1,30 @@
+name: ghproxy
+services:
+  ghproxy:
+    image: ${GHPROXY_IMAGE:?GHProxy requires verified digest}
+    platform: linux/amd64
+    restart: unless-stopped
+    user: "65534:65534"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    environment:
+      ENABLE_FRONTEND: "false"
+      RATE_LIMIT: "120"
+      RATE_PERIOD_HOURS: "0.016667"
+      MAX_FILE_SIZE: "1073741824"
+    networks:
+      gateway:
+        aliases: [ghproxy-backend]
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+networks:
+  gateway:
+    external: true
+    name: deploy_sub2api-network

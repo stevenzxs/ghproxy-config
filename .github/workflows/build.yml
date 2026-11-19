@@ -1,0 +1,54 @@
+name: Build verified GHProxy
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ghproxy-release
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: sky22333/hubproxy
+          ref: 320df5def5c202409d2beec0dd5b4b2266bedc02
+          path: source
+          persist-credentials: false
+      - name: Validate and build native Dockerfile
+        run: bash scripts/build.sh
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          docker run -d --name ghproxy-test -p 127.0.0.1:18521:5000 "ghcr.io/stevenzxs/ghproxy:config-$GITHUB_SHA"
+          trap 'docker logs ghproxy-test; docker rm -f ghproxy-test' EXIT
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:18521/ready > ready.json; then break; fi
+            sleep 1
+          done
+          python3 -c 'import json; d=json.load(open("ready.json")); assert d["ready"] and d["version"] == "v1.2.5"'
+      - name: Publish immutable candidate and evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          image="ghcr.io/stevenzxs/ghproxy:config-$GITHUB_SHA"
+          docker push "$image"
+          mkdir -p dist
+          docker image inspect "$image" > dist/image.json
+          cp sources.json ready.json dist/
+          printf '%s\n' "$GITHUB_SHA" > dist/config-sha.txt
+          docker image inspect "$image" --format '{{index .RepoDigests 0}}' > dist/image-digest.txt
+          git archive HEAD | gzip -n > dist/config.tar.gz
+          (cd dist && sha256sum image.json sources.json ready.json config-sha.txt image-digest.txt config.tar.gz > SHA256SUMS)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ghproxy-evidence
+          path: dist/
