@@ -1,11 +1,17 @@
 # BEGIN managed ghproxy.stevenzxs.cn
 ghproxy.stevenzxs.cn {
+    @frontend {
+        method GET HEAD
+        path / /assets/* /favicon.ico
+    }
+    handle @frontend {
+        reverse_proxy ghproxy-backend:5000
+    }
     @health path /ready
     handle @health {
         reverse_proxy ghproxy-backend:5000
     }
     @download {
-        remote_ip 115.190.243.21
         method GET HEAD
         path_regexp download ^/https:/+(github\.com/[^/]+/[^/]+/(releases|archive|blob|raw)/.+|raw\.githubusercontent\.com/[^/]+/[^/]+/.+)$
     }
@@ -16,7 +22,6 @@ ghproxy.stevenzxs.cn {
         }
     }
     @discover {
-        remote_ip 115.190.243.21
         method GET
         path_regexp discover ^/https:/+github\.com/[^/]+/[^/]+/info/refs$
         query service=git-upload-pack
@@ -28,7 +33,6 @@ ghproxy.stevenzxs.cn {
         }
     }
     @fetch {
-        remote_ip 115.190.243.21
         method POST
         path_regexp fetch ^/https:/+github\.com/[^/]+/[^/]+/git-upload-pack$
     }

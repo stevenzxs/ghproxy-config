@@ -22,7 +22,9 @@ class ContractTests(unittest.TestCase):
         caddy = (ROOT / 'config/Caddyfile.fragment').read_text()
         self.assertIn('git-upload-pack', caddy)
         self.assertNotIn('git-receive-pack', caddy)
-        self.assertIn('remote_ip 115.190.243.21', caddy)
+        self.assertNotIn('remote_ip', caddy)
+        self.assertIn('path / /assets/* /favicon.ico', caddy)
+        self.assertIn('ENABLE_FRONTEND: "true"', (ROOT / 'compose.yml').read_text())
         self.assertIn('respond 403', caddy)
         self.assertIn('header_up -Authorization', caddy)
 
